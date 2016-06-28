@@ -1,13 +1,10 @@
 package org.mycore.mods.classification;
 
-import java.util.AbstractMap;
-import java.util.Collections;
-import java.util.List;
+import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.log4j.Logger;
@@ -44,20 +41,22 @@ public class MCRClassificationMappingEventHandler extends MCREventHandlerBase {
 
     private static final MCRCategoryDAO DAO = MCRCategoryDAOFactory.getInstance();
 
-    private static List<Map.Entry<MCRCategoryID, MCRCategoryID>> getMappings(MCRCategory category) {
+    private static Map<MCRCategoryID, MCRCategoryID> getMappings(MCRCategory category) {
         Optional<MCRLabel> labelOptional = category.getLabel("x-mapping");
+        Hashtable<MCRCategoryID, MCRCategoryID> mappingTable = new Hashtable<>();
 
         if (labelOptional.isPresent()) {
             String label = labelOptional.get().getText();
-            return Stream.of(label.split("\\s"))
+            Stream.of(label.split("\\s"))
                 .map(categIdString -> categIdString.split(":"))
                 .map(categIdArr -> new MCRCategoryID(categIdArr[0], categIdArr[1]))
                 .filter(DAO::exist)
-                    .map(mappingTarget -> new AbstractMap.SimpleEntry<>(category.getId(), mappingTarget))
-                    .collect(Collectors.toList());
+                .forEach(mappingTarget -> {
+                    mappingTable.put(category.getId(), mappingTarget);
+                });
         }
 
-        return Collections.emptyList();
+        return mappingTable;
     }
 
     @Override
@@ -93,7 +92,7 @@ public class MCRClassificationMappingEventHandler extends MCREventHandlerBase {
                 .map(categoryId -> DAO.getCategory(categoryId, 0))
                 .filter(Objects::nonNull)
                 .map(MCRClassificationMappingEventHandler::getMappings)
-                .flatMap(list -> list.stream())
+                .flatMap(map -> map.entrySet().stream())
                 .distinct()
                 .forEach(mapping -> {
                     String taskMessage = String.format(Locale.ROOT, "add mapping from '%s' to '%s'", mapping.getKey().toString(), mapping.getValue().toString());
