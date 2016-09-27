@@ -1,5 +1,5 @@
 /**
- * $RCSfile$ $Revision$ $Date: 2011-03-23 13:37:07 +0100 (Wed, 23 Mar
+ * $RCSfile$ $Revision: 36070 $ $Date: 2011-03-23 13:37:07 +0100 (Wed, 23 Mar
  * 2011) $ This file is part of ** M y C o R e ** Visit our homepage at
  * http://www.mycore.de/ for details. This program is free software; you can use
  * it, redistribute it and / or modify it under the terms of the GNU General
@@ -179,6 +179,10 @@ public class MCRWebCLIContainer {
     public void setContinueIfOneFails(boolean con, boolean sendMessage) {
         this.processCallable.setContinueIfOneFails(con, sendMessage);
     }
+    
+    public void clearCommandList() {
+        this.processCallable.clearCommandList();
+    }
 
     private static class ProcessCallable implements Callable<Boolean> {
 
@@ -241,6 +245,11 @@ public class MCRWebCLIContainer {
                     LOGGER.error("Cannot send message to client.", e);
                 }
             }
+        }
+        
+        public void clearCommandList() {
+            this.commands.clear();
+            setCurrentCommand("");
         }
 
         public Boolean call() throws Exception {
